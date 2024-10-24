@@ -11,8 +11,8 @@ void main()
 
     if (idProceso == -1)
     {
-perror("No se puede lanzar proceso”);
-exit(-1);
+        perror("No se puede lanzar proceso");
+        exit(-1);
     }
     if (idProceso == 0)
     {
@@ -31,5 +31,5 @@ exit(-1);
 }
 void tratasenial(int nsenial)
 {
-    printf(“Recibida la señal del Padre\n”);
+    printf("Recibida la señal del Padre\n");
 }
