@@ -33,7 +33,7 @@ void imprimir_tablero(TABLERO *t)
     {
         for (int j = 0; j < 3; j++)
         {
-            printf(" %c |", t->tablero[i][j] ? t->tablero[i][j] : ' ');
+            printf(" %c |", t->tablero[i][j]);
         }
         printf("\n-----------\n");
     }
@@ -41,7 +41,6 @@ void imprimir_tablero(TABLERO *t)
 
 int verificar_ganador(TABLERO *t, char jugador)
 {
-    // Verificar filas y columnas
     for (int i = 0; i < 3; i++)
     {
         if ((t->tablero[i][0] == jugador && t->tablero[i][1] == jugador && t->tablero[i][2] == jugador) ||
@@ -50,14 +49,11 @@ int verificar_ganador(TABLERO *t, char jugador)
             return 1;
         }
     }
-
-    // Verificar diagonales
     if ((t->tablero[0][0] == jugador && t->tablero[1][1] == jugador && t->tablero[2][2] == jugador) ||
         (t->tablero[0][2] == jugador && t->tablero[1][1] == jugador && t->tablero[2][0] == jugador))
     {
         return 1;
     }
-
     return 0;
 }
 
@@ -68,21 +64,19 @@ int main()
     TABLERO *tablero;
     pid_t pid;
 
-    // Crear cola de mensajes
     qid = msgget(CLAVE_MSG, IPC_CREAT | 0666);
-
-    // Crear memoria compartida
     shmid = shmget(CLAVE_SHM, sizeof(TABLERO), IPC_CREAT | 0666);
     tablero = (TABLERO *)shmat(shmid, NULL, 0);
 
-    // Inicializar tablero
-    memset(tablero->tablero, 0, sizeof(tablero->tablero));
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+            tablero->tablero[i][j] = ' ';
     tablero->turno = 1;
 
     pid = fork();
 
     if (pid == 0)
-    { // Proceso hijo (jugador O)
+    {
         while (1)
         {
             if (tablero->turno == 2)
@@ -90,19 +84,16 @@ int main()
                 imprimir_tablero(tablero);
                 printf("Jugador O - Ingrese fila (0-2) y columna (0-2): ");
                 scanf("%d %d", &msg.fila, &msg.columna);
-
-                if (tablero->tablero[msg.fila][msg.columna] == 0)
+                if (tablero->tablero[msg.fila][msg.columna] == ' ')
                 {
                     tablero->tablero[msg.fila][msg.columna] = 'O';
                     tablero->turno = 1;
-
                     if (verificar_ganador(tablero, 'O'))
                     {
                         imprimir_tablero(tablero);
                         printf("¡Jugador O ha ganado!\n");
                         break;
                     }
-
                     msg.tipo = 1;
                     msgsnd(qid, &msg, sizeof(msg) - sizeof(long), 0);
                 }
@@ -114,7 +105,7 @@ int main()
         }
     }
     else
-    { // Proceso padre (jugador X)
+    {
         while (1)
         {
             if (tablero->turno == 1)
@@ -122,19 +113,16 @@ int main()
                 imprimir_tablero(tablero);
                 printf("Jugador X - Ingrese fila (0-2) y columna (0-2): ");
                 scanf("%d %d", &msg.fila, &msg.columna);
-
-                if (tablero->tablero[msg.fila][msg.columna] == 0)
+                if (tablero->tablero[msg.fila][msg.columna] == ' ')
                 {
                     tablero->tablero[msg.fila][msg.columna] = 'X';
                     tablero->turno = 2;
-
                     if (verificar_ganador(tablero, 'X'))
                     {
                         imprimir_tablero(tablero);
                         printf("¡Jugador X ha ganado!\n");
                         break;
                     }
-
                     msg.tipo = 2;
                     msgsnd(qid, &msg, sizeof(msg) - sizeof(long), 0);
                 }
@@ -144,12 +132,9 @@ int main()
                 msgrcv(qid, &msg, sizeof(msg) - sizeof(long), 1, 0);
             }
         }
-
-        // Limpiar recursos
         shmdt(tablero);
         shmctl(shmid, IPC_RMID, NULL);
         msgctl(qid, IPC_RMID, NULL);
     }
-
     return 0;
 }
