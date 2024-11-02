@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <pthread.h>Curso: Sistemas Operativos
+#include <pthread.h>
 struct parametros
 {
     int id;
